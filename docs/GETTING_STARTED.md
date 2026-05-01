@@ -52,6 +52,15 @@ ls data/output/
 cat data/output/sample-001.json | head -50
 ```
 
+You'll see:
+
+- `data/output/sample-001.json` … `sample-005.json` — one JSON file per retailer
+- `data/output/_aggregate.json` — all records combined
+- `data/output/sample-extracted.xlsx` — multi-sheet Excel workbook
+  (Retailers, Stores, Brands, SamplePrices, Sources, Quality)
+
+Open the `.xlsx` in Excel/Numbers/LibreOffice to browse the results.
+
 ## ☐ Step 3 — Add Your Retailers (1 min)
 
 Drop your Excel file at `data/input/retailers.xlsx` with these columns
@@ -95,6 +104,34 @@ node src/orchestrator.js --only-row sample-002
 
 ```bash
 node src/orchestrator.js --limit 10
+```
+
+## ☐ Step 4b — Customize the Spreadsheet Output
+
+The orchestrator writes an Excel workbook by default. Override with:
+
+```bash
+# Different file path
+node src/orchestrator.js --export results/march-2026.xlsx
+
+# CSV instead of Excel (one CSV per sheet)
+node src/orchestrator.js --export-format csv \
+  --export data/output/retailers.csv
+
+# Both formats
+node src/orchestrator.js --export-format both
+
+# Skip the spreadsheet (JSON only)
+node src/orchestrator.js --no-export
+```
+
+You can also re-export from existing JSON files without re-running agents:
+
+```bash
+npm run export                # rebuild xlsx from data/output/_aggregate.json
+npm run export:csv            # CSV instead
+npm run export:both           # both formats
+node src/export-cli.js --output /path/to/anywhere.xlsx
 ```
 
 ## ☐ Step 5 — Validate Results

@@ -19,7 +19,14 @@ fresh, isolated agent that:
 5. Maps findings to a strict JSON schema
 6. Validates that every claim is backed by a fetched source URL
 
-You get one JSON file per retailer, plus an aggregated `_aggregate.json`.
+You get:
+
+- One JSON file per retailer in `data/output/<row_id>.json` (full structured data + sources)
+- An aggregated `data/output/_aggregate.json` (all records in one file)
+- An Excel workbook `data/output/retailers-extracted.xlsx` with multiple sheets:
+  **Retailers** (one row per retailer, all top-level fields flattened),
+  **Stores** (long-form), **Brands**, **SamplePrices**, **Sources**, **Quality**
+- Optional CSV companion files (one per sheet) when `--export-format=csv` or `both`
 
 ---
 
@@ -57,6 +64,19 @@ For your own retailers: drop an Excel file at `data/input/retailers.xlsx`
 
 ```bash
 npm run extract
+```
+
+The Excel output lands at `data/output/retailers-extracted.xlsx`.
+
+### Re-export Without Re-running
+
+If you already have JSON outputs and just want a different spreadsheet
+format:
+
+```bash
+npm run export                # rebuild xlsx from existing JSONs
+npm run export:csv            # CSV instead
+npm run export:both           # xlsx + CSV side-by-side
 ```
 
 ---
@@ -160,8 +180,9 @@ You can override the auto-detection by passing `--render-type` to `smart_scrape`
 ├── configs/
 │   └── extraction-schema.json              # Strict output schema
 ├── src/
-│   ├── orchestrator.js                     # Reads input, dispatches agents
+│   ├── orchestrator.js                     # Reads input, dispatches agents, exports spreadsheet
 │   ├── agent-runner.js                     # Per-retailer runner (local + Copilot)
+│   ├── export-cli.js                       # Standalone JSON → XLSX/CSV exporter
 │   ├── scrapers/
 │   │   ├── index.js                        # Router
 │   │   ├── detector.js                     # Render-type classification
@@ -175,13 +196,14 @@ You can override the auto-detection by passing `--render-type` to `smart_scrape`
 │   │   └── hallucination-detector.js       # Source-attribution checks
 │   ├── utils/
 │   │   ├── excel-reader.js                 # CSV / XLSX input
+│   │   ├── excel-exporter.js               # JSON → XLSX/CSV (multi-sheet)
 │   │   ├── output-writer.js                # Per-row + aggregate writer
 │   │   └── logger.js                       # JSON-line logger
 │   └── mcp-server/
 │       └── retailer-tools-server.js        # MCP server for VS Code agent mode
 ├── data/
 │   ├── input/                              # Drop retailers.xlsx here
-│   ├── output/                             # Per-row JSON + _aggregate.json
+│   ├── output/                             # Per-row JSON + _aggregate.json + retailers-extracted.xlsx
 │   └── logs/                               # Daily JSON-line logs
 ├── examples/
 │   ├── sample-retailers.csv

@@ -4,12 +4,13 @@
 // shares context between retailers.
 
 import 'dotenv/config';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pLimit from 'p-limit';
 import { readRetailerInput } from './utils/excel-reader.js';
 import { runAgentForRetailer } from './agent-runner.js';
 import { aggregateOutputs } from './utils/output-writer.js';
+import { exportRecordsToWorkbook } from './utils/excel-exporter.js';
 import { closeBrowser } from './scrapers/dynamic-scraper.js';
 import { logger } from './utils/logger.js';
 
@@ -18,6 +19,9 @@ const config = {
   inputFile: args.input || './data/input/retailers.xlsx',
   outputDir: args.output || process.env.OUTPUT_DIR || './data/output',
   aggregateFile: args.aggregate || './data/output/_aggregate.json',
+  exportFile: args.export || './data/output/retailers-extracted.xlsx',
+  exportFormat: args['export-format'] || 'xlsx',
+  noExport: args['no-export'] === true,
   mode: args.mode || process.env.AGENT_MODE || 'local',
   concurrency: Number(args.concurrency || process.env.MAX_CONCURRENT_AGENTS || 5),
   dryRun: args['dry-run'] === true,
@@ -87,9 +91,22 @@ async function run() {
   const aggregate = aggregateOutputs(config.outputDir, config.aggregateFile);
   logger.info('orchestrator.aggregated', aggregate);
 
+  let exportInfo = null;
+  if (!config.noExport && aggregate.count > 0) {
+    try {
+      const records = JSON.parse(readFileSync(config.aggregateFile, 'utf-8')).records;
+      exportInfo = exportRecordsToWorkbook(records, config.exportFile, {
+        format: config.exportFormat,
+      });
+      logger.info('orchestrator.exported', exportInfo);
+    } catch (err) {
+      logger.error('orchestrator.export_failed', { error: err.message });
+    }
+  }
+
   await closeBrowser().catch(() => {});
 
-  printSummary(summary, aggregate, Date.now() - startTime);
+  printSummary(summary, aggregate, exportInfo, Date.now() - startTime);
 
   if (summary.failed > 0) {
     process.exitCode = 2;
@@ -104,14 +121,18 @@ function summarize(results) {
   return { total, successful, acceptable, failed };
 }
 
-function printSummary(summary, aggregate, durationMs) {
+function printSummary(summary, aggregate, exportInfo, durationMs) {
   const seconds = (durationMs / 1000).toFixed(1);
   console.log('\n=== Extraction Summary ===');
   console.log(`Total retailers   : ${summary.total}`);
   console.log(`Successful runs   : ${summary.successful}`);
   console.log(`Passed validation : ${summary.acceptable}`);
   console.log(`Failed runs       : ${summary.failed}`);
-  console.log(`Aggregate file    : ${aggregate.file}`);
+  console.log(`Aggregate JSON    : ${aggregate.file}`);
+  if (exportInfo) {
+    console.log(`Spreadsheet       : ${exportInfo.path}`);
+    console.log(`Sheets            : ${exportInfo.sheets.join(', ')}`);
+  }
   console.log(`Total duration    : ${seconds}s`);
   console.log('==========================\n');
 }
@@ -144,7 +165,10 @@ Usage: node src/orchestrator.js [options]
 Options:
   --input <file>          Path to Excel/CSV input (default: data/input/retailers.xlsx)
   --output <dir>          Directory for per-retailer JSON outputs (default: data/output)
-  --aggregate <file>      Aggregate output file (default: data/output/_aggregate.json)
+  --aggregate <file>      Aggregate JSON file (default: data/output/_aggregate.json)
+  --export <file>         Spreadsheet export path (default: data/output/retailers-extracted.xlsx)
+  --export-format <fmt>   "xlsx", "csv", or "both" (default: xlsx)
+  --no-export             Skip the spreadsheet export step
   --mode <mode>           "local" (deterministic scrape) or "copilot" (LLM agent)
                           (default: local; set AGENT_MODE env var to override)
   --concurrency <n>       Max parallel agents (default: 5)

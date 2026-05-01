@@ -75,11 +75,19 @@ jobs:
       - name: Run extraction
         run: |
           ARGS="--input ${{ env.INPUT_FILE }} --mode ${{ env.AGENT_MODE }} --concurrency ${{ env.MAX_CONCURRENT_AGENTS }}"
+          ARGS="$ARGS --export data/output/retailers-extracted.xlsx --export-format xlsx"
           if [ -n "${{ inputs.limit }}" ]; then
             ARGS="$ARGS --limit ${{ inputs.limit }}"
           fi
           node src/orchestrator.js $ARGS
         continue-on-error: true
+
+      - name: Generate CSV companion files
+        if: always()
+        run: |
+          if [ -f "data/output/_aggregate.json" ]; then
+            node src/export-cli.js --format csv --output data/output/retailers-extracted.csv || true
+          fi
 
       - name: Validate aggregate output
         if: always()
@@ -91,7 +99,7 @@ jobs:
             exit 1
           fi
 
-      - name: Upload extraction outputs
+      - name: Upload extraction outputs (JSON + Excel + CSV)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -100,6 +108,17 @@ jobs:
             data/output/
             data/logs/
           retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload spreadsheet only (separate artifact for easy download)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retailer-spreadsheet-${{ github.run_number }}
+          path: |
+            data/output/retailers-extracted.xlsx
+            data/output/retailers-extracted__*.csv
+          retention-days: 90
           if-no-files-found: warn
 
       - name: Generate summary

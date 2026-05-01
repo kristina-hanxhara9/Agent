@@ -9,8 +9,11 @@
   },
   "scripts": {
     "extract": "node src/orchestrator.js",
-    "extract:sample": "node src/orchestrator.js --input examples/sample-retailers.csv --output data/output/sample.json",
+    "extract:sample": "node src/orchestrator.js --input examples/sample-retailers.csv --export data/output/sample-extracted.xlsx",
     "extract:dry-run": "node src/orchestrator.js --dry-run",
+    "export": "node src/export-cli.js",
+    "export:csv": "node src/export-cli.js --format csv --output data/output/retailers-extracted.csv",
+    "export:both": "node src/export-cli.js --format both",
     "validate": "node src/validators/schema-validator.js",
     "mcp:server": "node src/mcp-server/retailer-tools-server.js",
     "playwright:install": "playwright install chromium",
