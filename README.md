@@ -269,8 +269,10 @@ retained 30 days.
 
 ## Documentation
 
+- [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) — 5-minute setup checklist
+- [`docs/VS_CODE_WORKFLOW.md`](docs/VS_CODE_WORKFLOW.md) — Run everything (local, cloud, agent) from VS Code
+- [`docs/VS_CODE_SETUP.md`](docs/VS_CODE_SETUP.md) — One-time VS Code + MCP setup
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Why this design, trade-offs
-- [`docs/VS_CODE_SETUP.md`](docs/VS_CODE_SETUP.md) — Local dev with agent mode
 - [`docs/SCRAPING_STRATEGY.md`](docs/SCRAPING_STRATEGY.md) — How HTML/JS/API detection works
 - [`.claude/skills/retailer-data-extractor/SKILL.md`](.claude/skills/retailer-data-extractor/SKILL.md) — The agent's instructions
 

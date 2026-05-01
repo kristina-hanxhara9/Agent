@@ -1,0 +1,152 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: install dependencies + Playwright",
+      "type": "shell",
+      "command": "npm install && npx playwright install chromium",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Extract: sample (5 retailers, local mode)",
+      "type": "shell",
+      "command": "npm run extract:sample",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new", "clear": true }
+    },
+    {
+      "label": "Extract: full batch (data/input/retailers.xlsx)",
+      "type": "shell",
+      "command": "npm run extract",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new", "clear": true }
+    },
+    {
+      "label": "Extract: dry run (list rows that would be processed)",
+      "type": "shell",
+      "command": "node src/orchestrator.js --dry-run --input ${input:inputFile}",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Extract: single row by ID",
+      "type": "shell",
+      "command": "node src/orchestrator.js --only-row ${input:rowId} --input ${input:inputFile}",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Extract: Copilot agent mode (uses LLM)",
+      "type": "shell",
+      "command": "AGENT_MODE=copilot npm run extract",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new", "clear": true }
+    },
+    {
+      "label": "Export: re-build XLSX from existing JSON outputs",
+      "type": "shell",
+      "command": "npm run export",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Export: CSV (one file per sheet)",
+      "type": "shell",
+      "command": "npm run export:csv",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Validate: check a single output file",
+      "type": "shell",
+      "command": "node src/validators/schema-validator.js ${input:outputFile}",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Test: run all unit tests",
+      "type": "shell",
+      "command": "npm test",
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "new", "clear": true }
+    },
+    {
+      "label": "GitHub: trigger extract workflow (manual)",
+      "type": "shell",
+      "command": "gh workflow run extract-retailer-data.yml -f input_file=${input:inputFile} -f mode=local -f concurrency=5",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "GitHub: watch latest workflow run",
+      "type": "shell",
+      "command": "gh run watch $(gh run list --workflow=extract-retailer-data.yml --limit 1 --json databaseId -q '.[0].databaseId')",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "GitHub: list recent workflow runs",
+      "type": "shell",
+      "command": "gh run list --workflow=extract-retailer-data.yml --limit 10",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "GitHub: download spreadsheet from latest run",
+      "type": "shell",
+      "command": "gh run download $(gh run list --workflow=extract-retailer-data.yml --limit 1 --json databaseId -q '.[0].databaseId') -n retailer-spreadsheet-$(gh run list --workflow=extract-retailer-data.yml --limit 1 --json number -q '.[0].number') -D ./data/output/from-actions",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "GitHub: download all artifacts from latest run",
+      "type": "shell",
+      "command": "gh run download $(gh run list --workflow=extract-retailer-data.yml --limit 1 --json databaseId -q '.[0].databaseId') -D ./data/output/from-actions",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "GitHub: view latest workflow run in browser",
+      "type": "shell",
+      "command": "gh run view $(gh run list --workflow=extract-retailer-data.yml --limit 1 --json databaseId -q '.[0].databaseId') --web",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "GitHub: cancel latest workflow run",
+      "type": "shell",
+      "command": "gh run cancel $(gh run list --workflow=extract-retailer-data.yml --limit 1 --json databaseId -q '.[0].databaseId')",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "MCP: start retailer-tools server (debug)",
+      "type": "shell",
+      "command": "npm run mcp:server",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "inputFile",
+      "type": "promptString",
+      "description": "Path to the input Excel/CSV file",
+      "default": "data/input/retailers.xlsx"
+    },
+    {
+      "id": "rowId",
+      "type": "promptString",
+      "description": "Row ID to process (e.g., sample-001)",
+      "default": "sample-001"
+    },
+    {
+      "id": "outputFile",
+      "type": "promptString",
+      "description": "Path to a single output JSON file to validate",
+      "default": "data/output/sample-001.json"
+    }
+  ]
+}
