@@ -1,0 +1,2 @@
+# Place your retailer Excel/CSV files here.
+# Expected columns: id (optional), retailer_name, website (optional), country (optional)

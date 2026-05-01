@@ -1,0 +1,47 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Orchestrator: Sample CSV (local mode)",
+      "program": "${workspaceFolder}/src/orchestrator.js",
+      "args": [
+        "--input", "examples/sample-retailers.csv",
+        "--output", "data/output",
+        "--mode", "local",
+        "--concurrency", "2"
+      ],
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Orchestrator: Excel input (Copilot mode)",
+      "program": "${workspaceFolder}/src/orchestrator.js",
+      "args": [
+        "--input", "data/input/retailers.xlsx",
+        "--mode", "copilot"
+      ],
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Orchestrator: Dry run",
+      "program": "${workspaceFolder}/src/orchestrator.js",
+      "args": ["--dry-run", "--input", "examples/sample-retailers.csv"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "MCP server (debug standalone)",
+      "program": "${workspaceFolder}/src/mcp-server/retailer-tools-server.js",
+      "console": "integratedTerminal"
+    }
+  ]
+}

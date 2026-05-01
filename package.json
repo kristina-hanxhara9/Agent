@@ -1,0 +1,47 @@
+{
+  "name": "retailer-data-extractor",
+  "version": "1.0.0",
+  "description": "Production-ready multi-agent system for extracting retailer data using GitHub Copilot Agents. One agent per retailer, zero hallucinations, smart HTML/JS/API scraping.",
+  "type": "module",
+  "main": "src/orchestrator.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "extract": "node src/orchestrator.js",
+    "extract:sample": "node src/orchestrator.js --input examples/sample-retailers.csv --output data/output/sample.json",
+    "extract:dry-run": "node src/orchestrator.js --dry-run",
+    "validate": "node src/validators/schema-validator.js",
+    "mcp:server": "node src/mcp-server/retailer-tools-server.js",
+    "playwright:install": "playwright install chromium",
+    "test": "node --test tests/",
+    "lint": "eslint src/ --ext .js",
+    "setup": "npm install && npm run playwright:install"
+  },
+  "keywords": [
+    "github-copilot",
+    "ai-agent",
+    "web-scraping",
+    "retailer-data",
+    "mcp",
+    "playwright",
+    "cheerio"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "p-limit": "^6.2.0",
+    "playwright": "^1.49.1",
+    "undici": "^7.2.0",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.17.0"
+  }
+}

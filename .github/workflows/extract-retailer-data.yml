@@ -1,0 +1,132 @@
+name: Extract Retailer Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      input_file:
+        description: 'Path to input file (relative to repo root)'
+        required: false
+        default: 'data/input/retailers.xlsx'
+      mode:
+        description: 'Agent mode'
+        required: false
+        type: choice
+        options: [local, copilot]
+        default: 'local'
+      concurrency:
+        description: 'Max concurrent agents'
+        required: false
+        default: '5'
+      limit:
+        description: 'Limit to first N rows (empty = all)'
+        required: false
+        default: ''
+  schedule:
+    # Daily at 03:00 UTC — adjust as needed
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: write
+  actions: read
+  models: read
+
+concurrency:
+  group: extract-retailer-data
+  cancel-in-progress: false
+
+jobs:
+  extract:
+    name: Run extraction agents
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAX_CONCURRENT_AGENTS: ${{ inputs.concurrency || '5' }}
+      AGENT_MODE: ${{ inputs.mode || 'local' }}
+      LOG_LEVEL: info
+      USER_AGENT: 'Mozilla/5.0 (compatible; RetailerDataBot/1.0; +https://github.com/${{ github.repository }})'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify input file exists
+        run: |
+          if [ ! -f "${{ inputs.input_file || 'data/input/retailers.xlsx' }}" ]; then
+            echo "::warning::Input file not found, using sample"
+            echo "INPUT_FILE=examples/sample-retailers.csv" >> $GITHUB_ENV
+          else
+            echo "INPUT_FILE=${{ inputs.input_file || 'data/input/retailers.xlsx' }}" >> $GITHUB_ENV
+          fi
+
+      - name: Run extraction
+        run: |
+          ARGS="--input ${{ env.INPUT_FILE }} --mode ${{ env.AGENT_MODE }} --concurrency ${{ env.MAX_CONCURRENT_AGENTS }}"
+          if [ -n "${{ inputs.limit }}" ]; then
+            ARGS="$ARGS --limit ${{ inputs.limit }}"
+          fi
+          node src/orchestrator.js $ARGS
+        continue-on-error: true
+
+      - name: Validate aggregate output
+        if: always()
+        run: |
+          if [ -f "data/output/_aggregate.json" ]; then
+            node -e "const a=require('./data/output/_aggregate.json');console.log('Records:',a.record_count,'Errors:',a.error_count);process.exit(a.record_count>0?0:1);"
+          else
+            echo "::error::No aggregate output file produced"
+            exit 1
+          fi
+
+      - name: Upload extraction outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retailer-extraction-${{ github.run_number }}
+          path: |
+            data/output/
+            data/logs/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Generate summary
+        if: always()
+        run: |
+          {
+            echo "# Retailer Extraction Run #${{ github.run_number }}"
+            echo ""
+            echo "- **Input file:** ${{ env.INPUT_FILE }}"
+            echo "- **Mode:** ${{ env.AGENT_MODE }}"
+            echo "- **Concurrency:** ${{ env.MAX_CONCURRENT_AGENTS }}"
+            echo ""
+            if [ -f "data/output/_aggregate.json" ]; then
+              echo "## Results"
+              echo ""
+              node -e "
+                const a = require('./data/output/_aggregate.json');
+                const high = a.records.filter(r => r.data_quality?.confidence === 'high').length;
+                const medium = a.records.filter(r => r.data_quality?.confidence === 'medium').length;
+                const low = a.records.filter(r => r.data_quality?.confidence === 'low').length;
+                console.log('| Metric | Count |');
+                console.log('|--------|-------|');
+                console.log('| Total records | ' + a.record_count + ' |');
+                console.log('| High confidence | ' + high + ' |');
+                console.log('| Medium confidence | ' + medium + ' |');
+                console.log('| Low confidence | ' + low + ' |');
+                console.log('| Errors | ' + a.error_count + ' |');
+              "
+            fi
+          } >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,171 @@
+{
+  "row_id": "sample-001",
+  "extraction_metadata": {
+    "agent_version": "1.0.0",
+    "extracted_at": "2026-05-01T08:00:00Z",
+    "model_used": "claude-sonnet-4-6",
+    "session_id": "00000000-0000-0000-0000-000000000001",
+    "duration_ms": 23400,
+    "tool_calls_made": 6
+  },
+  "company": {
+    "name_input": "Sport Müller GmbH",
+    "legal_name": "Sport Müller GmbH",
+    "trading_name": "Sport Müller",
+    "website": "https://www.sportmueller.de",
+    "founded_year": 1968,
+    "description_en": "Family-run sports retailer specializing in alpine skiing, hiking, and cycling equipment.",
+    "description_original": "Familiengeführter Sportfachhandel mit Schwerpunkt auf alpinem Skisport, Wandern und Fahrrad.",
+    "logo_url": "https://www.sportmueller.de/assets/logo.png",
+    "social_media": {
+      "facebook": "https://facebook.com/sportmueller",
+      "instagram": "https://instagram.com/sportmueller",
+      "linkedin": null,
+      "twitter": null,
+      "tiktok": null,
+      "youtube": null
+    }
+  },
+  "locations": {
+    "headquarters": {
+      "street": "Hauptstraße",
+      "house_number": "42",
+      "postal_code": "82467",
+      "city": "Garmisch-Partenkirchen",
+      "region": "Bayern",
+      "country": "DE",
+      "country_name": "Deutschland",
+      "latitude": null,
+      "longitude": null
+    },
+    "store_count": 3,
+    "countries": ["DE"],
+    "stores": [
+      {
+        "name": "Hauptfiliale Garmisch",
+        "address": {
+          "street": "Hauptstraße",
+          "house_number": "42",
+          "postal_code": "82467",
+          "city": "Garmisch-Partenkirchen",
+          "region": "Bayern",
+          "country": "DE",
+          "country_name": "Deutschland",
+          "latitude": null,
+          "longitude": null
+        },
+        "phone": "+49 8821 12345",
+        "opening_hours": "Mo-Fr 09:00-18:30, Sa 09:00-16:00"
+      }
+    ]
+  },
+  "business_model": {
+    "type": "buying_group",
+    "parent_company": null,
+    "buying_group_membership": "Intersport",
+    "year_joined_group": null
+  },
+  "products": {
+    "categories": ["skiing", "hiking", "cycling", "outdoor apparel"],
+    "brands": ["Salomon", "Atomic", "Mammut", "Vaude", "Trek"],
+    "price_positioning": "mid_range",
+    "sample_prices": [
+      {
+        "product": "Atomic Cloud Q9 Damen Ski",
+        "brand": "Atomic",
+        "price": 549.95,
+        "currency": "EUR",
+        "url": "https://www.sportmueller.de/products/atomic-cloud-q9"
+      }
+    ],
+    "private_labels": []
+  },
+  "status": {
+    "operating_status": "open",
+    "closure_date": null,
+    "closure_reason": null,
+    "evidence": "Active homepage with current 2026 winter season banner; recent Instagram posts within last 7 days."
+  },
+  "contact": {
+    "phone": "+49 8821 12345",
+    "email": "info@sportmueller.de",
+    "contact_form_url": "https://www.sportmueller.de/kontakt"
+  },
+  "company_size": {
+    "employees": null,
+    "employees_range": "11-50",
+    "annual_revenue_eur": null,
+    "revenue_year": null
+  },
+  "services": {
+    "online_shop": true,
+    "click_and_collect": true,
+    "delivery": true,
+    "in_store_pickup": true,
+    "repair_service": true,
+    "consultation": true
+  },
+  "data_quality": {
+    "completeness": 0.86,
+    "confidence": "high",
+    "fields_filled": 19,
+    "fields_total": 22,
+    "missing_fields": [
+      "company_size.employees",
+      "company_size.annual_revenue_eur",
+      "business_model.year_joined_group"
+    ],
+    "notes": "Buying group membership inferred from Intersport logo on homepage footer.",
+    "warnings": []
+  },
+  "sources": [
+    {
+      "url": "https://www.sportmueller.de",
+      "fetched_at": "2026-05-01T07:59:50Z",
+      "render_type": "static",
+      "http_status": 200,
+      "contributed_fields": [
+        "company.trading_name",
+        "company.description_en",
+        "company.description_original",
+        "company.logo_url",
+        "business_model.buying_group_membership",
+        "products.categories"
+      ],
+      "page_type": "homepage"
+    },
+    {
+      "url": "https://www.sportmueller.de/impressum",
+      "fetched_at": "2026-05-01T07:59:55Z",
+      "render_type": "static",
+      "http_status": 200,
+      "contributed_fields": [
+        "company.legal_name",
+        "company.founded_year",
+        "locations.headquarters",
+        "contact.phone",
+        "contact.email"
+      ],
+      "page_type": "imprint"
+    },
+    {
+      "url": "https://www.sportmueller.de/filialen",
+      "fetched_at": "2026-05-01T08:00:00Z",
+      "render_type": "static",
+      "http_status": 200,
+      "contributed_fields": [
+        "locations.store_count",
+        "locations.stores"
+      ],
+      "page_type": "store_finder"
+    },
+    {
+      "url": "https://www.sportmueller.de/marken",
+      "fetched_at": "2026-05-01T08:00:05Z",
+      "render_type": "static",
+      "http_status": 200,
+      "contributed_fields": ["products.brands"],
+      "page_type": "brands"
+    }
+  ]
+}

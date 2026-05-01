@@ -1,0 +1,370 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kristina-hanxhara9/agent/schemas/retailer-extraction.schema.json",
+  "title": "Retailer Extraction Output",
+  "description": "Strict schema for per-retailer agent output. Every non-null field must be backed by entries in the `sources` array.",
+  "type": "object",
+  "required": [
+    "row_id",
+    "extraction_metadata",
+    "company",
+    "locations",
+    "business_model",
+    "products",
+    "status",
+    "data_quality",
+    "sources"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "row_id": {
+      "type": "string",
+      "description": "Unique ID from the Excel input row",
+      "minLength": 1
+    },
+    "extraction_metadata": {
+      "type": "object",
+      "required": ["agent_version", "extracted_at", "model_used", "session_id"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_version": { "type": "string" },
+        "extracted_at": { "type": "string", "format": "date-time" },
+        "model_used": { "type": "string" },
+        "session_id": { "type": "string" },
+        "duration_ms": { "type": "integer", "minimum": 0 },
+        "tool_calls_made": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "company": {
+      "type": "object",
+      "required": ["name_input", "legal_name", "trading_name", "website", "founded_year", "description_en", "description_original"],
+      "additionalProperties": false,
+      "properties": {
+        "name_input": {
+          "type": "string",
+          "description": "The retailer name from the Excel row (input, never modified)"
+        },
+        "legal_name": {
+          "type": ["string", "null"],
+          "description": "Registered legal name (e.g., from imprint/Handelsregister)"
+        },
+        "trading_name": {
+          "type": ["string", "null"],
+          "description": "Brand name customers know (may differ from legal name)"
+        },
+        "website": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "founded_year": {
+          "type": ["integer", "null"],
+          "minimum": 1500,
+          "maximum": 2100
+        },
+        "description_en": {
+          "type": ["string", "null"],
+          "description": "English description of the company (translated if needed)"
+        },
+        "description_original": {
+          "type": ["string", "null"],
+          "description": "Description in the company's original language"
+        },
+        "logo_url": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "social_media": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "facebook": { "type": ["string", "null"], "format": "uri" },
+            "instagram": { "type": ["string", "null"], "format": "uri" },
+            "linkedin": { "type": ["string", "null"], "format": "uri" },
+            "twitter": { "type": ["string", "null"], "format": "uri" },
+            "tiktok": { "type": ["string", "null"], "format": "uri" },
+            "youtube": { "type": ["string", "null"], "format": "uri" }
+          }
+        }
+      }
+    },
+    "locations": {
+      "type": "object",
+      "required": ["headquarters", "store_count", "countries", "stores"],
+      "additionalProperties": false,
+      "properties": {
+        "headquarters": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/address" }
+          ]
+        },
+        "store_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Total physical stores (0 = online only). null = unknown."
+        },
+        "countries": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 2, "maxLength": 3 },
+          "uniqueItems": true,
+          "description": "ISO 3166-1 alpha-2 or alpha-3 country codes where retailer operates"
+        },
+        "stores": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/store" },
+          "description": "Individual stores if listed publicly (sample, not exhaustive)"
+        }
+      }
+    },
+    "business_model": {
+      "type": "object",
+      "required": ["type", "parent_company", "buying_group_membership"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "independent",
+            "chain",
+            "buying_group",
+            "franchise",
+            "online_only",
+            "unknown"
+          ]
+        },
+        "parent_company": {
+          "type": ["string", "null"],
+          "description": "Parent corporation (if chain/franchise)"
+        },
+        "buying_group_membership": {
+          "type": ["string", "null"],
+          "description": "Name of buying group/cooperative (e.g., Expert, Euronics, Intersport)"
+        },
+        "year_joined_group": {
+          "type": ["integer", "null"],
+          "minimum": 1900,
+          "maximum": 2100
+        }
+      }
+    },
+    "products": {
+      "type": "object",
+      "required": ["categories", "brands", "price_positioning", "sample_prices"],
+      "additionalProperties": false,
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Product categories sold (e.g., 'electronics', 'home goods', 'sportswear')"
+        },
+        "brands": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Brands explicitly listed on the retailer's site"
+        },
+        "price_positioning": {
+          "type": ["string", "null"],
+          "enum": ["budget", "mid_range", "premium", "luxury", "mixed", null]
+        },
+        "sample_prices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["product", "price", "currency", "url"],
+            "additionalProperties": false,
+            "properties": {
+              "product": { "type": "string" },
+              "brand": { "type": ["string", "null"] },
+              "price": { "type": "number", "minimum": 0 },
+              "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+              "url": { "type": "string", "format": "uri" }
+            }
+          },
+          "maxItems": 10,
+          "description": "Up to 10 sample products with prices, used to verify positioning"
+        },
+        "private_labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "required": ["operating_status", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "operating_status": {
+          "type": "string",
+          "enum": ["open", "temporarily_closed", "permanently_closed", "unknown"]
+        },
+        "closure_date": {
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "closure_reason": {
+          "type": ["string", "null"]
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Quote or summary of the evidence supporting the status (must come from sources)"
+        }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "phone": { "type": ["string", "null"] },
+        "email": { "type": ["string", "null"], "format": "email" },
+        "contact_form_url": { "type": ["string", "null"], "format": "uri" }
+      }
+    },
+    "company_size": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "employees": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "employees_range": {
+          "type": ["string", "null"],
+          "enum": ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5001-10000", "10000+", null]
+        },
+        "annual_revenue_eur": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "revenue_year": {
+          "type": ["integer", "null"]
+        }
+      }
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "online_shop": { "type": ["boolean", "null"] },
+        "click_and_collect": { "type": ["boolean", "null"] },
+        "delivery": { "type": ["boolean", "null"] },
+        "in_store_pickup": { "type": ["boolean", "null"] },
+        "repair_service": { "type": ["boolean", "null"] },
+        "consultation": { "type": ["boolean", "null"] }
+      }
+    },
+    "data_quality": {
+      "type": "object",
+      "required": ["completeness", "confidence", "fields_filled", "fields_total", "missing_fields"],
+      "additionalProperties": false,
+      "properties": {
+        "completeness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "fields_filled / fields_total"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        },
+        "fields_filled": { "type": "integer", "minimum": 0 },
+        "fields_total": { "type": "integer", "minimum": 1 },
+        "missing_fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Dot-paths to fields that could not be verified"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Conflicts, ambiguities, or limitations encountered"
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["url", "fetched_at", "render_type", "contributed_fields"],
+        "additionalProperties": false,
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "fetched_at": { "type": "string", "format": "date-time" },
+          "render_type": {
+            "type": "string",
+            "enum": ["static", "dynamic", "api", "search_result"]
+          },
+          "http_status": { "type": ["integer", "null"] },
+          "contributed_fields": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1,
+            "description": "Dot-paths of fields this source supports"
+          },
+          "page_type": {
+            "type": ["string", "null"],
+            "enum": [
+              "homepage",
+              "about",
+              "contact",
+              "imprint",
+              "store_finder",
+              "product_listing",
+              "product_detail",
+              "brands",
+              "footer",
+              "search_result",
+              "other",
+              null
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "address": {
+      "type": "object",
+      "required": ["street", "city", "country"],
+      "additionalProperties": false,
+      "properties": {
+        "street": { "type": ["string", "null"] },
+        "house_number": { "type": ["string", "null"] },
+        "postal_code": { "type": ["string", "null"] },
+        "city": { "type": ["string", "null"] },
+        "region": { "type": ["string", "null"] },
+        "country": {
+          "type": ["string", "null"],
+          "minLength": 2,
+          "maxLength": 3,
+          "description": "ISO 3166-1 country code"
+        },
+        "country_name": { "type": ["string", "null"] },
+        "latitude": { "type": ["number", "null"], "minimum": -90, "maximum": 90 },
+        "longitude": { "type": ["number", "null"], "minimum": -180, "maximum": 180 }
+      }
+    },
+    "store": {
+      "type": "object",
+      "required": ["name", "address"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "$ref": "#/$defs/address" },
+        "phone": { "type": ["string", "null"] },
+        "opening_hours": {
+          "type": ["string", "null"],
+          "description": "Free-text opening hours as written on site"
+        }
+      }
+    }
+  }
+}

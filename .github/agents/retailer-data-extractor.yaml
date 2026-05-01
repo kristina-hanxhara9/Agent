@@ -1,0 +1,136 @@
+# GitHub Copilot Custom Agent: Retailer Data Extractor
+# Reference: https://docs.github.com/en/copilot/customizing-copilot/custom-agents
+#
+# This agent is dispatched ONCE PER RETAILER. Each invocation runs in an
+# isolated session with no memory of other retailers — preventing
+# cross-contamination of data and ensuring zero hallucinations.
+
+name: retailer-data-extractor
+version: 1.0.0
+description: >
+  Extracts structured, source-verified data about a single retailer.
+  Handles static HTML, JavaScript-heavy SPAs, and API-based sites.
+  Never hallucinates — every claim is traced to a source URL.
+
+# ----------------------------------------------------------------------------
+# Model Configuration
+# ----------------------------------------------------------------------------
+model:
+  # Use Claude Sonnet for balanced cost/accuracy (recommended for production).
+  # Switch to claude-opus-4-7 for highest accuracy on complex retailers.
+  primary: claude-sonnet-4-6
+  fallback: claude-haiku-4-5-20251001
+  temperature: 0.0           # Deterministic — no creative invention
+  max_tokens: 8192
+
+# ----------------------------------------------------------------------------
+# Trigger
+# ----------------------------------------------------------------------------
+# Invoked by orchestrator via `gh copilot agent run` or VS Code agent mode.
+trigger:
+  type: manual
+  per_invocation_scope: single_retailer
+
+# ----------------------------------------------------------------------------
+# Skills (loaded from .claude/skills/)
+# ----------------------------------------------------------------------------
+skills:
+  - retailer-data-extractor
+
+# ----------------------------------------------------------------------------
+# Tools the agent can call
+# ----------------------------------------------------------------------------
+tools:
+  # Built-in
+  - name: web_fetch
+    description: Fetch a URL and return its HTML/text content
+  - name: file_read
+    description: Read a local file (for cached scrapes)
+  - name: file_write
+    description: Write the final extraction JSON
+
+  # MCP server tools (defined in .vscode/mcp.json and src/mcp-server/)
+  - name: smart_scrape
+    description: >
+      Auto-detects whether a site is static HTML, JS-heavy SPA, or API-based,
+      then uses the optimal scraping strategy (Cheerio / Playwright / fetch).
+    mcp_server: retailer-tools
+  - name: detect_render_type
+    description: Classify a URL as static / dynamic / api-based
+    mcp_server: retailer-tools
+  - name: extract_structured_data
+    description: Extract JSON-LD, Microdata, OpenGraph, Schema.org from HTML
+    mcp_server: retailer-tools
+  - name: search_company_info
+    description: Search the public web for company information (with source URLs)
+    mcp_server: retailer-tools
+
+# ----------------------------------------------------------------------------
+# Inputs (passed from orchestrator)
+# ----------------------------------------------------------------------------
+inputs:
+  retailer_name:
+    type: string
+    required: true
+    description: The retailer's company name from the Excel row
+  retailer_website:
+    type: string
+    required: false
+    description: Known website URL (optional — agent will discover if missing)
+  country_hint:
+    type: string
+    required: false
+    description: Country to disambiguate retailers with similar names
+  row_id:
+    type: string
+    required: true
+    description: Unique ID from the Excel row (for output traceability)
+
+# ----------------------------------------------------------------------------
+# Outputs
+# ----------------------------------------------------------------------------
+outputs:
+  schema: configs/extraction-schema.json
+  format: json
+  destination: data/output/${row_id}.json
+
+# ----------------------------------------------------------------------------
+# Hard Constraints (Anti-Hallucination)
+# ----------------------------------------------------------------------------
+constraints:
+  - id: REQUIRE_SOURCES
+    rule: Every non-null field MUST have a source URL in the `sources` array
+    enforcement: blocking
+  - id: NO_INVENTION
+    rule: If data cannot be verified from a fetched source, the field MUST be null
+    enforcement: blocking
+  - id: SINGLE_RETAILER_SCOPE
+    rule: Agent MUST NOT extract data for any retailer other than `retailer_name`
+    enforcement: blocking
+  - id: SCHEMA_COMPLIANCE
+    rule: Output MUST validate against configs/extraction-schema.json
+    enforcement: blocking
+  - id: SOURCE_TRACEABILITY
+    rule: >
+      Each source URL MUST have been actually fetched in this session
+      (no quoting URLs without verifying contents)
+    enforcement: blocking
+
+# ----------------------------------------------------------------------------
+# Resource Limits
+# ----------------------------------------------------------------------------
+limits:
+  max_tool_calls: 30
+  max_runtime_seconds: 120
+  max_pages_fetched: 15
+  max_retries_per_url: 2
+
+# ----------------------------------------------------------------------------
+# Permissions
+# ----------------------------------------------------------------------------
+permissions:
+  network: allow         # Required for web scraping
+  filesystem:
+    read: ["./data/", "./configs/"]
+    write: ["./data/output/", "./data/logs/"]
+  shell: deny            # No shell access — pure data extraction

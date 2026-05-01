@@ -1,0 +1,26 @@
+{
+  "github.copilot.chat.agent.enabled": true,
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.experimental.codeGeneration.useInstructionFiles": true,
+  "chat.agent.enabled": true,
+  "chat.mcp.enabled": true,
+  "chat.tools.autoApprove": false,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/data/output/*.json": false,
+    "**/data/logs": false
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/data/output": true,
+    "**/data/logs": true,
+    "**/.scraper-cache": true
+  },
+  "json.schemas": [
+    {
+      "fileMatch": ["data/output/*.json"],
+      "url": "./configs/extraction-schema.json"
+    }
+  ],
+  "eslint.validate": ["javascript"]
+}

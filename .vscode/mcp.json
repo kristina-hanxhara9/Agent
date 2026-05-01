@@ -1,0 +1,16 @@
+{
+  "$schema": "https://aka.ms/vscode-mcp-config-schema",
+  "servers": {
+    "retailer-tools": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/src/mcp-server/retailer-tools-server.js"],
+      "env": {
+        "USER_AGENT": "Mozilla/5.0 (compatible; RetailerDataBot/1.0)",
+        "PLAYWRIGHT_HEADLESS": "true",
+        "LOG_LEVEL": "info"
+      }
+    }
+  },
+  "inputs": []
+}

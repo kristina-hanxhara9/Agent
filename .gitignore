@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Outputs (keep structure, ignore content)
+data/output/*.json
+data/output/*.csv
+data/output/*.xlsx
+data/logs/*.log
+!data/output/.gitkeep
+!data/logs/.gitkeep
+
+# Inputs (private retailer lists)
+data/input/*.xlsx
+data/input/*.csv
+!data/input/.gitkeep
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
+
+# IDE
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
+.tmp/
+.scraper-cache/
+
+# Build
+dist/
+build/
+coverage/
+
+# OS
+Thumbs.db
